@@ -1,14 +1,16 @@
 if (MSVC)
+set(rcid 1 CACHE INTERNAL "rcid")
 function(create_resource root input_paths lib)
   set(rc-file-contents "")
   set(emplace-statements "")
-  set(id 1)
+  set(offset ${rcid})
   foreach(p ${input_paths})
     file(RELATIVE_PATH rel-path ${root} ${p})
-    string(APPEND emplace-statements "    m.emplace(\"${rel-path}\", ${id});\n")
-    string(APPEND create-statements "    create_resource(${id}),\n")
-    string(APPEND rc-file-contents "${id} RCDATA ${p}\n")
-    math(EXPR id "${id}+1")
+    string(APPEND emplace-statements "    m.emplace(\"${rel-path}\", ${rcid});\n")
+    string(APPEND create-statements "    create_resource(${rcid}),\n")
+    string(APPEND rc-file-contents "${rcid} RCDATA ${p}\n")
+    math(EXPR rcid "${rcid}+1")
+    set(rcid ${rcid} CACHE INTERNAL "rcid")
   endforeach(p input_paths)
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/resource.rc ${rc-file-contents})
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/include/${lib}.h "\
@@ -52,7 +54,7 @@ resource make_resource(int id) {
   resource res[] = {
     ${create-statements}\
   };
-  return res[id - 1];
+  return res[id - ${offset}];
 }
 
 int get_resource_id(std::string const& s) {
