@@ -178,7 +178,7 @@ resource get_resource(std::string const& s) {
     GENERATED true
   )
   add_library(${lib}-res OBJECT IMPORTED GLOBAL)
-  set_target_properties(${lib}-res PROPERTIES IMPORTED_OBJECTS ${o-files})
+  set_target_properties(${lib}-res PROPERTIES IMPORTED_OBJECTS "${o-files}")
 
   add_library(${lib} EXCLUDE_FROM_ALL STATIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc)
   target_compile_features(${lib} PUBLIC cxx_std_17)
@@ -265,7 +265,7 @@ resource get_resource(std::string const& s) {
     GENERATED true
   )
   add_library(${lib}-res OBJECT IMPORTED GLOBAL)
-  set_target_properties(${lib}-res PROPERTIES IMPORTED_OBJECTS ${o-files})
+  set_target_properties(${lib}-res PROPERTIES IMPORTED_OBJECTS "${o-files}")
 
   add_library(${lib} EXCLUDE_FROM_ALL STATIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc)
   target_compile_features(${lib} PUBLIC cxx_std_17)
