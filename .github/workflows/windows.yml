@@ -22,7 +22,7 @@ jobs:
       run: cmake -G "Visual Studio 16 2019" -A x64 -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.mode }}
 
     - name: Build
-      run: cmake --build build  --config ${{ matrix.mode }}
+      run: cmake --build build  --config ${{ matrix.mode }} --target res-example
 
     - name: Run tests
       run: build\${{ matrix.mode }}\res-example.exe
