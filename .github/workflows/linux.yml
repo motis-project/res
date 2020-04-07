@@ -55,7 +55,7 @@ jobs:
     - name: Build
       run: |
         ccache -z
-        cmake --build build
+        cmake --build build --target res-example
         ccache -s
     - name: Run Tests
       run: ./build/res-example
