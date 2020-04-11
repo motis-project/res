@@ -197,11 +197,12 @@ function(create_resource root input_paths lib)
 static_cast<std::size_t>(&_binary_${mangled-path}_end - &_binary_${mangled-path}_start),\
 reinterpret_cast<void const*>(&_binary_${mangled-path}_start)},\n")
     string(APPEND emplace-statements "    m.emplace(\"${rel-path}\", ${id});\r\n")
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o
       COMMAND ld -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o ${rel-path}
       DEPENDS ${p}
       WORKING_DIRECTORY ${root}
-      COMMENT "Generating resource ${out_f}"
+      COMMENT "Generating resource ${rel-path} (${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o)"
       VERBATIM
     )
     list(APPEND o-files ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o)
@@ -268,6 +269,7 @@ resource get_resource(std::string const& s) {
   set_target_properties(${lib}-res PROPERTIES IMPORTED_OBJECTS "${o-files}")
 
   add_library(${lib} EXCLUDE_FROM_ALL STATIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc)
+  target_link_libraries(${lib} ${lib}-res)
   target_compile_features(${lib} PUBLIC cxx_std_17)
   target_include_directories(${lib} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/include)
 endfunction()
