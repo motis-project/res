@@ -1,7 +1,13 @@
 project(res)
 cmake_minimum_required(VERSION 3.13)
 
-include(create_resource.cmake)
+if(MSVC)
+  include(create_resource_msvc.cmake)
+elseif(APPLE)
+  include(create_resource_apple.cmake)
+else()
+  include(create_resource_default.cmake)
+endif()
 
 file(GLOB resources ${CMAKE_CURRENT_SOURCE_DIR}/example.cc)
 create_resource(${CMAKE_CURRENT_SOURCE_DIR} "${resources}" mysrc)
