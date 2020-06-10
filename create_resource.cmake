@@ -181,6 +181,7 @@ resource get_resource(std::string const& s) {
   set_target_properties(${lib}-res PROPERTIES IMPORTED_OBJECTS "${o-files}")
 
   add_library(${lib} EXCLUDE_FROM_ALL STATIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc)
+  target_link_libraries(${lib} ${lib}-res)
   target_compile_features(${lib} PUBLIC cxx_std_17)
   target_include_directories(${lib} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/include)
 endfunction()
