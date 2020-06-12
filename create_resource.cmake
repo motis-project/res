@@ -206,54 +206,67 @@ reinterpret_cast<void const*>(&_binary_${mangled-path}_start)},\n")
       WORKING_DIRECTORY ${root}
       COMMENT "Generating resource ${rel-path} (${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o)"
       VERBATIM
-      )
+    )
     list(APPEND o-files ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o)
     math(EXPR id "${id}+1")
   endforeach(p input_paths)
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/include/${lib}.h "\
 #pragma once
+
 #include <cstddef>
 #include <string>
+
 namespace ${lib} {
+
 struct resource {
-std::size_t size_{0U};
-void const* ptr_{nullptr};
+  std::size_t size_{0U};
+  void const* ptr_{nullptr};
 };
+
 resource get_resource(std::string const&);
 int get_resource_id(std::string const&);
 resource make_resource(int id);
+
 }  // namespace ${lib}
 ")
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc "\
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc "\
 #include \"${lib}.h\"
+
 #include <map>
 #include <string>
+
 ${extern-definitions}
+
 namespace ${lib} {
+
 resource resources[] = {
 ${resource-statements}\
 };
+
 resource make_resource(int id) {
-return resources[id];
+  return resources[id];
 }
+
 int get_resource_id(std::string const& s) {
-static auto resources = [] {
-  std::map<std::string, int> m;
+  static auto resources = [] {
+    std::map<std::string, int> m;
 ${emplace-statements}\
-  return m;
-}();
-return resources.at(s);
+    return m;
+  }();
+  return resources.at(s);
 }
+
 resource get_resource(std::string const& s) {
-return make_resource(get_resource_id(s));
+  return make_resource(get_resource_id(s));
 }
+
 }  // namespace ${lib}
 ")
   set_source_files_properties(${o-files} PROPERTIES
     EXTERNAL_OBJECT true
     GENERATED true
-    )
+  )
   add_library(${lib}-res OBJECT IMPORTED GLOBAL)
   set_target_properties(${lib}-res PROPERTIES IMPORTED_OBJECTS "${o-files}")
 
