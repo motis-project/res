@@ -94,7 +94,8 @@ function(create_resource root input_paths lib)
   set(id 0)
   foreach(p ${input_paths})
     file(RELATIVE_PATH rel-path ${root} ${p})
-    string(REGEX REPLACE "[^0-9a-zA-Z]" "_" mangled-path ${rel-path})
+    string(SUBSTRING ${lib} 0 11 mangled-path)
+    string(APPEND mangled-path ${id})
     string(APPEND resource-statements "  create_resource(\"${mangled-path}\"),\n")
     string(APPEND emplace-statements "    m.emplace(\"${rel-path}\", ${id});\r\n")
     add_custom_command(
@@ -181,6 +182,7 @@ resource get_resource(std::string const& s) {
   set_target_properties(${lib}-res PROPERTIES IMPORTED_OBJECTS "${o-files}")
 
   add_library(${lib} EXCLUDE_FROM_ALL STATIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc)
+  target_link_libraries(${lib} ${lib}-res)
   target_compile_features(${lib} PUBLIC cxx_std_17)
   target_include_directories(${lib} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/include)
 endfunction()
