@@ -66,6 +66,14 @@ jobs:
       - uses: actions/checkout@v2
       - uses: seanmiddleditch/gha-setup-ninja@master
 
+      # ==== INSTALL ====
+      - name: Install LLVM
+        if: matrix.config.cc == 'clang-9' && matrix.config.os == 'ubuntu-latest'
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: sudo apt-get install -y --no-install-recommends libc++-9-dev libc++abi-9-dev clang-tidy-9
+
+      # ==== BUILD ====
       - name: CMake
         run: |
           cmake \
@@ -82,5 +90,6 @@ jobs:
       - name: Build
         run: cmake --build build --target res-example
 
+      # ==== RUN ====
       - name: Run Tests
         run: ./build/res-example
