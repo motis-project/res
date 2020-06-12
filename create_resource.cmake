@@ -94,7 +94,7 @@ function(create_resource root input_paths lib)
   set(id 0)
   foreach(p ${input_paths})
     file(RELATIVE_PATH rel-path ${root} ${p})
-    string(REGEX REPLACE "[^0-9a-zA-Z]" "_" mangled-path ${rel-path})
+    set(mangled-path ${lib}-${i})
     string(APPEND resource-statements "  create_resource(\"${mangled-path}\"),\n")
     string(APPEND emplace-statements "    m.emplace(\"${rel-path}\", ${id});\r\n")
     add_custom_command(
@@ -192,7 +192,7 @@ function(create_resource root input_paths lib)
   set(id 0)
   foreach(p ${input_paths})
     file(RELATIVE_PATH rel-path ${root} ${p})
-    string(REGEX REPLACE "[^0-9a-zA-Z]" "_" mangled-path ${rel-path})
+    set(mangled-path ${lib}-${i})
     string(APPEND extern-definitions "extern const char _binary_${mangled-path}_start, _binary_${mangled-path}_end;\n")
     string(APPEND resource-statements "  resource{\
 static_cast<std::size_t>(&_binary_${mangled-path}_end - &_binary_${mangled-path}_start),\
