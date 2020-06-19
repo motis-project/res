@@ -82,39 +82,53 @@ endfunction(create_resource)
 elseif(APPLE)
 
 function(create_resource root input_paths lib)
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}-stub.c "")
+  # Write an empty dummy object file because the ld call needs this.
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}-stub.c "")
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/stub.o
     COMMAND
       ${CMAKE_C_COMPILER}
         -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/stub.o
-        -c ${CMAKE_CURRENT_BINARY_DIR}/${lib}-stub.c
+        -c ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}-stub.c
+  )
+
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/all_res.bin
+    COMMAND cat ${input_paths} > ${CMAKE_CURRENT_BINARY_DIR}/${lib}/all_res.bin
+    COMMENT Concatenate ${lib} resource file with all resources.
+    DEPENDS ${input_paths}
   )
 
   set(id 0)
+  set(res-offset 0)
+  set(res-total-size 0)
   foreach(p ${input_paths})
+    file(SIZE "${p}" res-input-length)
+    math(EXPR res-total-size "${res-total-size}+${res-input-length}")
+    math(EXPR res-size "${res-total-size}-${res-offset}")
+
+    string(APPEND resource-statements "    create_resource(${res-offset}, ${res-size}),\n")
+
     file(RELATIVE_PATH rel-path ${root} ${p})
-    string(SUBSTRING ${lib} 0 11 mangled-path)
-    string(APPEND mangled-path ${id})
-    string(APPEND resource-statements "  create_resource(\"${mangled-path}\"),\n")
     string(APPEND emplace-statements "    m.emplace(\"${rel-path}\", ${id});\r\n")
-    add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o
-      COMMAND
-        ld
-          -r -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o
-          -sectcreate binary ${mangled-path} ${rel-path}
-          ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/stub.o
-      DEPENDS
-        ${p}
-        ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/stub.o
-      WORKING_DIRECTORY ${root}
-      COMMENT "Generating resource ${out_f}"
-      VERBATIM
-    )
-    list(APPEND o-files ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o)
+
+    math(EXPR res-offset "${res-offset}+${res-size}")
     math(EXPR id "${id}+1")
   endforeach(p input_paths)
+
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o
+    COMMAND
+      ld
+        -r -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o
+        -sectcreate binary ${lib}_res ${CMAKE_CURRENT_BINARY_DIR}/${lib}/all_res.bin
+        ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/stub.o
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/stub.o
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${lib}/all_res.bin
+    WORKING_DIRECTORY ${root}
+    COMMENT "Generating resource ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o"
+    VERBATIM
+  )
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/include/${lib}.h "\
 #pragma once
@@ -146,16 +160,18 @@ extern const struct mach_header_64 _mh_execute_header;
 
 namespace ${lib} {
 
-resource create_resource(char const* name) {
-  unsigned long size;
-  auto ptr = getsectiondata(&_mh_execute_header, \"binary\", name, &size);
-  return resource{size, ptr};
+static auto size = size_t{};
+static uint8_t const* const base = getsectiondata(
+    &_mh_execute_header, \"binary\", \"${lib}_res\", &size);
+
+resource create_resource(size_t const offset, size_t const size) {
+  return resource{size, base + offset};
 }
 
 resource make_resource(int id) {
   static resource resources[] = {
 ${resource-statements}\
-};
+  };
   return resources[id];
 }
 
@@ -174,12 +190,17 @@ resource get_resource(std::string const& s) {
 
 }  // namespace ${lib}
 ")
-  set_source_files_properties(${o-files} PROPERTIES
+  set_source_files_properties(${lib}-res.o
+    PROPERTIES
     EXTERNAL_OBJECT true
     GENERATED true
   )
   add_library(${lib}-res OBJECT IMPORTED GLOBAL)
-  set_target_properties(${lib}-res PROPERTIES IMPORTED_OBJECTS "${o-files}")
+  set_target_properties(${lib}-res
+    PROPERTIES
+    IMPORTED_OBJECTS
+    ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o
+  )
 
   add_library(${lib} EXCLUDE_FROM_ALL STATIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc)
   target_link_libraries(${lib} ${lib}-res)
