@@ -234,30 +234,41 @@ reinterpret_cast<void const*>(&_binary_${mangled-path}_start)},\n")
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/include/${lib}.h "\
 #pragma once
+
 #include <cstddef>
 #include <string>
+
 namespace ${lib} {
+
 struct resource {
   std::size_t size_{0U};
   void const* ptr_{nullptr};
 };
+
 resource get_resource(std::string const&);
 int get_resource_id(std::string const&);
 resource make_resource(int id);
+
 }  // namespace ${lib}
 ")
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc "\
 #include \"${lib}.h\"
+
 #include <map>
 #include <string>
+
 ${extern-definitions}
+
 namespace ${lib} {
+
 resource resources[] = {
 ${resource-statements}\
 };
+
 resource make_resource(int id) {
   return resources[id];
 }
+
 int get_resource_id(std::string const& s) {
   static auto resources = [] {
     std::map<std::string, int> m;
@@ -266,9 +277,11 @@ ${emplace-statements}\
   }();
   return resources.at(s);
 }
+
 resource get_resource(std::string const& s) {
   return make_resource(get_resource_id(s));
 }
+
 }  // namespace ${lib}
 ")
   set_source_files_properties(${o-files} PROPERTIES
