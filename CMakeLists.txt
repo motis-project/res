@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.13)
 
 include(create_resource.cmake)
 
-file(GLOB resources ${CMAKE_CURRENT_SOURCE_DIR}/example.cc)
-create_resource(${CMAKE_CURRENT_SOURCE_DIR} "${resources}" mysrc)
+set(mysrc-files "${CMAKE_CURRENT_SOURCE_DIR}/example.cc;${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")
+create_resource(${CMAKE_CURRENT_SOURCE_DIR} "${mysrc-files}" mysrc)
 
 file(GLOB resources ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
 create_resource(${CMAKE_CURRENT_SOURCE_DIR} "${resources}" gitignore)
