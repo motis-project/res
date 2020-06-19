@@ -116,12 +116,13 @@ function(create_resource root input_paths lib)
     math(EXPR id "${id}+1")
   endforeach(p input_paths)
 
+  string(SUBSTRING ${lib} 0 15 short-lib)
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o
     COMMAND
       ld
         -r -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o
-        -sectcreate binary ${lib}_res ${CMAKE_CURRENT_BINARY_DIR}/${lib}/all_res.bin
+        -sectcreate binary ${short-lib} ${CMAKE_CURRENT_BINARY_DIR}/${lib}/all_res.bin
         ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/stub.o
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/stub.o
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${lib}/all_res.bin
@@ -162,7 +163,7 @@ namespace ${lib} {
 
 static auto size = size_t{};
 static uint8_t const* const base = getsectiondata(
-    &_mh_execute_header, \"binary\", \"${lib}_res\", &size);
+    &_mh_execute_header, \"binary\", \"${short-lib}\", &size);
 
 resource create_resource(size_t const offset, size_t const size) {
   return resource{size, base + offset};
