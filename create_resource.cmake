@@ -193,7 +193,7 @@ ${resource-statements}\
 }
 
 int get_resource_id(std::string const& s) {
-  return resources.at(s);
+  return resource_ids.at(s);
 }
 
 resource get_resource(std::string const& s) {
