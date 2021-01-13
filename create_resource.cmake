@@ -17,6 +17,7 @@ function(create_resource root input_paths lib)
 #pragma once
 
 #include <cstddef>
+#include <map>
 #include <string>
 
 namespace ${lib} {
@@ -29,6 +30,7 @@ struct resource {
 resource get_resource(std::string const&);
 int get_resource_id(std::string const&);
 resource make_resource(int id);
+std::map<std::string, int> const& get_resource_ids();
 
 }  // namespace ${lib}
 ")
@@ -41,6 +43,12 @@ resource make_resource(int id);
 #include \"windows.h\"
 
 namespace ${lib} {
+
+static auto resource_ids = [] {
+  std::map<std::string, int> m;
+${emplace-statements}\
+  return m;
+}();
 
 resource create_resource(int id) {
   auto const a = FindResource(nullptr, MAKEINTRESOURCEA(id), RT_RCDATA);
@@ -58,16 +66,15 @@ resource make_resource(int id) {
 }
 
 int get_resource_id(std::string const& s) {
-  static auto resources = [] {
-    std::map<std::string, int> m;
-${emplace-statements}\
-    return m;
-  }();
-  return resources.at(s);
+  return resource_ids.at(s);
 }
 
 resource get_resource(std::string const& s) {
   return make_resource(get_resource_id(s));
+}
+
+std::map<std::string, int> const& get_resource_ids() {
+  return resource_ids;
 }
 
 }  // namespace ${lib}
@@ -135,6 +142,7 @@ function(create_resource root input_paths lib)
 #pragma once
 
 #include <cstddef>
+#include <map>
 #include <string>
 
 namespace ${lib} {
@@ -147,6 +155,7 @@ struct resource {
 resource get_resource(std::string const&);
 int get_resource_id(std::string const&);
 resource make_resource(int id);
+std::map<std::string, int> const& get_resource_ids();
 
 }  // namespace ${lib}
 ")
@@ -165,6 +174,13 @@ static auto size = size_t{};
 static uint8_t const* const base = getsectiondata(
     &_mh_execute_header, \"binary\", \"${short-lib}\", &size);
 
+
+static auto resource_ids = [] {
+  std::map<std::string, int> m;
+${emplace-statements}\
+  return m;
+}();
+
 resource create_resource(size_t const offset, size_t const size) {
   return resource{size, base + offset};
 }
@@ -177,16 +193,15 @@ ${resource-statements}\
 }
 
 int get_resource_id(std::string const& s) {
-  static auto resources = [] {
-    std::map<std::string, int> m;
-${emplace-statements}\
-    return m;
-  }();
   return resources.at(s);
 }
 
 resource get_resource(std::string const& s) {
   return make_resource(get_resource_id(s));
+}
+
+std::map<std::string, int> const& get_resource_ids() {
+  return resource_ids;
 }
 
 }  // namespace ${lib}
@@ -237,6 +252,7 @@ reinterpret_cast<void const*>(&_binary_${mangled-path}_start)},\n")
 #pragma once
 
 #include <cstddef>
+#include <map>
 #include <string>
 
 namespace ${lib} {
@@ -249,6 +265,7 @@ struct resource {
 resource get_resource(std::string const&);
 int get_resource_id(std::string const&);
 resource make_resource(int id);
+std::map<std::string, int> const& get_resource_ids();
 
 }  // namespace ${lib}
 ")
@@ -262,6 +279,12 @@ ${extern-definitions}
 
 namespace ${lib} {
 
+static auto resource_ids = [] {
+  std::map<std::string, int> m;
+${emplace-statements}\
+  return m;
+}();
+
 resource resources[] = {
 ${resource-statements}\
 };
@@ -271,16 +294,15 @@ resource make_resource(int id) {
 }
 
 int get_resource_id(std::string const& s) {
-  static auto resources = [] {
-    std::map<std::string, int> m;
-${emplace-statements}\
-    return m;
-  }();
-  return resources.at(s);
+  return resource_ids.at(s);
 }
 
 resource get_resource(std::string const& s) {
   return make_resource(get_resource_id(s));
+}
+
+std::map<std::string, int> const& get_resource_ids() {
+  return resource_ids;
 }
 
 }  // namespace ${lib}
