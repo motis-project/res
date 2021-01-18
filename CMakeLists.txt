@@ -1,6 +1,8 @@
 project(res)
 cmake_minimum_required(VERSION 3.13)
 
+add_executable(embedfiles embedfiles.cc)
+
 include(create_resource.cmake)
 
 set(mysrc-files "${CMAKE_CURRENT_SOURCE_DIR}/example.cc;${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt")

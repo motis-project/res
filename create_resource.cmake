@@ -106,6 +106,15 @@ function(create_resource root input_paths lib)
     DEPENDS ${input_paths}
   )
 
+  if (DEFINED ARGV3)
+    add_custom_command(
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/${lib}-res.cc
+      COMMAND embedfiles ${CMAKE_CURRENT_BINARY_DIR}/${lib}/${lib}-res.cc ${lib} ${input_paths}
+      DEPENDS embedfiles
+    )
+    add_library(${lib}-res ${CMAKE_CURRENT_BINARY_DIR}/${lib}/${lib}-res.cc)
+  endif()
+
   set(id 0)
   set(res-offset 0)
   set(res-total-size 0)
@@ -159,12 +168,17 @@ std::map<std::string, int> const& get_resource_ids();
 
 }  // namespace ${lib}
 ")
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc "\
-#include \"${lib}.h\"
 
+
+if (DEFINED ARGV3)
+  set(res-${lib}-access "\
+namespace ${lib} {
+
+extern uint32_t size;
+extern uint8_t const* const base;")
+else()
+  set(res-${lib}-access "\
 #include <mach-o/getsect.h>
-#include <map>
-#include <string>
 
 extern const struct mach_header_64 _mh_execute_header;
 
@@ -172,8 +186,16 @@ namespace ${lib} {
 
 static auto size = size_t{};
 static uint8_t const* const base = getsectiondata(
-    &_mh_execute_header, \"binary\", \"${short-lib}\", &size);
+    &_mh_execute_header, \"binary\", \"${short-lib}\", &size);")
+endif()
 
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc "\
+#include \"${lib}.h\"
+
+#include <map>
+#include <string>
+
+${res-${lib}-access}
 
 static auto resource_ids = [] {
   std::map<std::string, int> m;
@@ -206,22 +228,24 @@ std::map<std::string, int> const& get_resource_ids() {
 
 }  // namespace ${lib}
 ")
-  set_source_files_properties(${lib}-res.o
-    PROPERTIES
-    EXTERNAL_OBJECT true
-    GENERATED true
-  )
-  add_library(${lib}-res OBJECT IMPORTED GLOBAL)
-  set_target_properties(${lib}-res
-    PROPERTIES
-    IMPORTED_OBJECTS
-    ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o
-  )
+
+
+  if (NOT DEFINED ARGV3)
+    set_source_files_properties(${lib}-res.o
+      PROPERTIES
+      EXTERNAL_OBJECT true
+      GENERATED true)
+    add_library(${lib}-res OBJECT IMPORTED GLOBAL)
+    set_target_properties(${lib}-res
+      PROPERTIES
+      IMPORTED_OBJECTS
+      ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o)
+  endif()
 
   add_library(${lib} EXCLUDE_FROM_ALL STATIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/src/${lib}.cc)
-  target_link_libraries(${lib} ${lib}-res)
   target_compile_features(${lib} PUBLIC cxx_std_17)
   target_include_directories(${lib} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/${lib}/include)
+  target_link_libraries(${lib} ${lib}-res)
 endfunction()
 
 else()
