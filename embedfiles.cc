@@ -1,7 +1,7 @@
 // Based on https://stackoverflow.com/a/11814544
 
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 
 FILE* open_or_exit(const char* fname, const char* mode) {
   FILE* f = fopen(fname, mode);
@@ -14,9 +14,10 @@ FILE* open_or_exit(const char* fname, const char* mode) {
 
 int main(int argc, char** argv) {
   if (argc < 4) {
-    fprintf(stderr,
-            "USAGE: %s DESTINATION_FILE NAMESPACE RES_PATH_1 [RES_PATH_2, ...]\n",
-            argv[0]);
+    fprintf(
+        stderr,
+        "USAGE: %s DESTINATION_FILE NAMESPACE RES_PATH_1 [RES_PATH_2, ...]\n",
+        argv[0]);
     return EXIT_FAILURE;
   }
 
