@@ -251,6 +251,11 @@ endfunction()
 else()
 
 function(create_resource root input_paths lib)
+  if (CMAKE_CROSSCOMPILING)
+    set(resource-linker ${CMAKE_LINKER})
+  else()
+    set(resource-linker ld)
+  endif()
   set(id 0)
   foreach(p ${input_paths})
     file(RELATIVE_PATH rel-path ${root} ${p})
@@ -262,7 +267,7 @@ reinterpret_cast<void const*>(&_binary_${mangled-path}_start)},\n")
     string(APPEND emplace-statements "    m.emplace(\"${rel-path}\", ${id});\r\n")
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o
-      COMMAND ${CMAKE_LINKER} -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o ${rel-path}
+      COMMAND ${resource-linker} -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o ${rel-path}
       DEPENDS ${p}
       WORKING_DIRECTORY ${root}
       COMMENT "Generating resource ${rel-path} (${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o)"
