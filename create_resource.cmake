@@ -256,6 +256,9 @@ function(create_resource root input_paths lib)
   else()
     set(resource-linker ld)
   endif()
+  if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686")
+    set(flags "-melf_i386")
+  endif()
   set(id 0)
   foreach(p ${input_paths})
     file(RELATIVE_PATH rel-path ${root} ${p})
@@ -267,7 +270,7 @@ reinterpret_cast<void const*>(&_binary_${mangled-path}_start)},\n")
     string(APPEND emplace-statements "    m.emplace(\"${rel-path}\", ${id});\r\n")
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o
-      COMMAND ${resource-linker} -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o ${rel-path}
+      COMMAND ${resource-linker} ${flags} -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o ${rel-path}
       DEPENDS ${p}
       WORKING_DIRECTORY ${root}
       COMMENT "Generating resource ${rel-path} (${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/res_${id}.o)"
