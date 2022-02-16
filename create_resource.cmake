@@ -133,10 +133,17 @@ function(create_resource root input_paths lib)
   endforeach(p input_paths)
 
   string(SUBSTRING ${lib} 0 15 short-lib)
+  if ("${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
+    message(STATUS "res arch is CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}")
+  else()
+    set(arch-flag -arch ${CMAKE_OSX_ARCHITECTURES})
+    message(STATUS "res arch is CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}")
+  endif()
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o
     COMMAND
       ld
+        ${arch-flag}
         -r -o ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/${lib}-res.o
         -sectcreate binary ${short-lib} ${CMAKE_CURRENT_BINARY_DIR}/${lib}/all_res.bin
         ${CMAKE_CURRENT_BINARY_DIR}/${lib}/obj/stub.o
